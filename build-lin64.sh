@@ -2,4 +2,5 @@
 set -Eeuo pipefail
 
 make -j$(nproc)
+sstrip gamex86_64.so
 
