@@ -55,6 +55,7 @@ cvar_t  *g_defaults_file;
 cvar_t  *g_item_ban;
 cvar_t  *g_bugs;
 cvar_t  *g_teleporter_nofreeze;
+cvar_t  *g_instagib;
 cvar_t  *g_spawn_mode;
 cvar_t  *g_team_chat;
 cvar_t  *g_mute_chat;
@@ -941,8 +942,9 @@ static void CheckDMRules(void)
     int         i;
     gclient_t   *c;
 
-    if (g_item_ban->modified) {
+    if (g_item_ban->modified || g_instagib->modified) {
         G_UpdateItemBans();
+        g_instagib->modified = false;
     }
 
     if (g_vote_treshold->modified) {
@@ -1299,6 +1301,7 @@ static void G_Init(void)
     g_item_ban = gi.cvar("g_item_ban", "0", 0);
     g_bugs = gi.cvar("g_bugs", "0", 0);
     g_teleporter_nofreeze = gi.cvar("g_teleporter_nofreeze", "0", 0);
+    g_instagib = gi.cvar("g_instagib", "0", CVAR_SERVERINFO);
     g_spawn_mode = gi.cvar("g_spawn_mode", "1", 0);
     g_team_chat = gi.cvar("g_team_chat", "0", 0);
     g_mute_chat = gi.cvar("g_mute_chat", "0", 0);

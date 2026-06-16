@@ -913,6 +913,9 @@ void SP_worldspawn(edict_t *ent)
     level.sounds.drown = gi.soundindex("player/drown1.wav");
 
     PrecacheItem(INDEX_ITEM(ITEM_BLASTER));
+    if (g_instagib->value) {
+        PrecacheItem(INDEX_ITEM(ITEM_RAILGUN));
+    }
 
     gi.soundindex("player/lava1.wav");
     gi.soundindex("player/lava2.wav");

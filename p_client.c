@@ -499,6 +499,10 @@ static void TossClientWeapon(edict_t *self)
     bool        quad;
     float       spread;
 
+    if (g_instagib->value) {
+        return;
+    }
+
     item = self->client->weapon;
     if (!self->client->inventory[self->client->ammo_index])
         item = NULL;
@@ -1098,6 +1102,17 @@ static void InitClientInventory(edict_t *ent)
     gitem_t *it;
 
     client->inventory[ITEM_BLASTER] = 1;
+
+    if (g_instagib->value) {
+        client->inventory[ITEM_RAILGUN] = 1;
+        client->selected_item = ITEM_RAILGUN;
+        client->weapon = INDEX_ITEM(ITEM_RAILGUN);
+        client->max_slugs = 50;
+        client->inventory[ITEM_SLUGS] = 50;
+        ent->max_health = 100;
+        ent->health = 100;
+        return;
+    }
 
     for (i = WEAP_SHOTGUN; i < WEAP_TOTAL; i++) {
         if (weapon_have & (1 << (i - WEAP_SHOTGUN))) {

@@ -393,6 +393,7 @@ typedef struct {
 #define VOTE_WEAPONSTAY 64
 #define VOTE_PROTECTION 128
 #define VOTE_TELEMODE   256
+#define VOTE_INSTAGIB   512
 
 // vote flags
 #define VF_ANNOUNCE 1
@@ -670,6 +671,7 @@ extern  cvar_t  *g_item_ban;
 extern  cvar_t  *g_maps_random;
 extern  cvar_t  *g_bugs;
 extern  cvar_t  *g_teleporter_nofreeze;
+extern  cvar_t  *g_instagib;
 extern  cvar_t  *g_spawn_mode;
 extern  cvar_t  *g_team_chat;
 extern  cvar_t  *g_mute_chat;

@@ -495,6 +495,11 @@ void Drop_Ammo(edict_t *ent, gitem_t *item)
     edict_t *dropped;
     int     index;
 
+    if (g_instagib->value && item == INDEX_ITEM(ITEM_SLUGS)) {
+        gi.cprintf(ent, PRINT_HIGH, "Can't drop slugs in instagib\n");
+        return;
+    }
+
     index = ITEM_INDEX(item);
     dropped = Drop_Item(ent, item);
     if (ent->client->inventory[index] >= item->quantity)
@@ -1035,6 +1040,11 @@ void SpawnItem(edict_t *ent, gitem_t *item)
 {
     PrecacheItem(item);
 
+    if (g_instagib->value) {
+        G_FreeEdict(ent);
+        return;
+    }
+
     if (ent->spawnflags) {
         ent->spawnflags = 0;
         gi.dprintf("%s at %s has invalid spawnflags set\n", ent->classname, vtos(ent->s.origin));
@@ -1080,6 +1090,9 @@ static bool ItemBanned(edict_t *ent)
     int itb = (int)g_item_ban->value;
 
     if (ent->item) {
+        if (g_instagib->value) {
+            return true;
+        }
         if (ent->item->use == Use_Quad) {
             return (itb & ITB_QUAD);
         }

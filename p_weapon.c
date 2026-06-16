@@ -207,6 +207,15 @@ Called by ClientBeginServerFrame and ClientThink
 */
 void Think_Weapon(edict_t *ent)
 {
+    if (g_instagib->value) {
+        ent->client->inventory[ITEM_RAILGUN] = 1;
+        ent->client->inventory[ITEM_SLUGS] = 50;
+        ent->client->max_slugs = 50;
+        if (ent->client->weapon != INDEX_ITEM(ITEM_RAILGUN)) {
+            ent->client->newweapon = INDEX_ITEM(ITEM_RAILGUN);
+        }
+    }
+
     // if just died, put the weapon away
     if (ent->health < 1) {
         ent->client->newweapon = NULL;
@@ -273,6 +282,11 @@ Drop_Weapon
 void Drop_Weapon(edict_t *ent, gitem_t *item)
 {
     int     index;
+
+    if (g_instagib->value && item == INDEX_ITEM(ITEM_RAILGUN)) {
+        gi.cprintf(ent, PRINT_HIGH, "Can't drop railgun in instagib\n");
+        return;
+    }
 
     if (DF(WEAPONS_STAY))
         return;
@@ -1155,8 +1169,10 @@ static void weapon_railgun_fire(edict_t *ent)
         ent->client->silencer_shots--;
     }
 
-    if (!DF(INFINITE_AMMO))
+    if (!DF(INFINITE_AMMO) && !g_instagib->value)
         ent->client->inventory[ent->client->ammo_index]--;
+    if (g_instagib->value)
+        ent->client->inventory[ITEM_SLUGS] = 50;
 
     ent->client->resp.frags[FRAG_RAILGUN].atts++;
 }

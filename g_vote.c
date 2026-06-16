@@ -198,6 +198,12 @@ bool G_CheckVote(void)
             gi.cvar_set("g_teleporter_nofreeze", va("%d", level.vote.value));
             game.settings_modified++;
             break;
+        case VOTE_INSTAGIB:
+            gi.bprintf(PRINT_HIGH, "Vote passed: instagib is now %sABLED.\n",
+                       level.vote.value ? "EN" : "DIS");
+            gi.cvar_set("g_instagib", va("%d", level.vote.value));
+            game.settings_modified++;
+            break;
 
         default:
             break;
@@ -282,6 +288,10 @@ static void G_BuildProposal(char *buffer)
     case VOTE_TELEMODE:
         sprintf(buffer, "%s teleporter mode",
                 level.vote.value ? "no freeze" : "normal");
+        break;
+    case VOTE_INSTAGIB:
+        sprintf(buffer, "%sable instagib",
+                level.vote.value ? "en" : "dis");
         break;
     default:
         strcpy(buffer, "unknown");
@@ -505,6 +515,11 @@ static bool vote_telemode(edict_t *ent)
     return true;
 }
 
+static bool vote_instagib(edict_t *ent)
+{
+    return vote_toggle(ent, "Instagib", (g_instagib->value != 0));
+}
+
 typedef struct {
     const char  *name;
     int         bit;
@@ -523,6 +538,7 @@ static const vote_proposal_t vote_proposals[] = {
     { "weaponstay", VOTE_WEAPONSTAY,    vote_weaponstay },
     { "protection", VOTE_PROTECTION,    vote_protection },
     { "telemode",   VOTE_TELEMODE,      vote_telemode   },
+    { "instagib",   VOTE_INSTAGIB,      vote_instagib   },
     { NULL }
 };
 
@@ -603,6 +619,10 @@ void Cmd_Vote_f(edict_t *ent)
         if (mask & VOTE_TELEMODE) {
             gi.cprintf(ent, PRINT_HIGH,
                        " telemode <normal/nofreeze>     Change teleporter mode\n");
+        }
+        if (mask & VOTE_INSTAGIB) {
+            gi.cprintf(ent, PRINT_HIGH,
+                       " instagib <0/1>                 Toggle instagib mode\n");
         }
         gi.cprintf(ent, PRINT_HIGH,
                    "Available commands:\n"
