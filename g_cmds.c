@@ -832,7 +832,7 @@ void Cmd_HighScores_f(edict_t *ent)
     }
 
     gi.cprintf(ent, PRINT_HIGH,
-               " # Name            FPH  Date\n"
+               " # Name            Frg  Date\n"
                "-- --------------- ---- ----------------\n");
     for (i = 0; i < level.numscores; i++) {
         s = &level.scores[i];

@@ -377,7 +377,7 @@ static void G_RegisterScore(void)
     gclient_t    *c;
     score_t *s;
     int total;
-    int sec, score;
+    int score;
 
     total = G_CalcRanks(ranks);
     if (!total) {
@@ -387,12 +387,7 @@ static void G_RegisterScore(void)
     // grab our champion
     c = ranks[0];
 
-    // calculate FPH
-    sec = (level.framenum - c->resp.enter_framenum) / HZ;
-    if (!sec) {
-        sec = 1;
-    }
-    score = c->resp.score * 3600 / sec;
+    score = c->resp.score;
 
     if (score < 1) {
         return; // do not record bogus results
@@ -415,7 +410,7 @@ static void G_RegisterScore(void)
 
     qsort(level.scores, level.numscores, sizeof(score_t), ScoreCmp);
 
-    gi.dprintf("Added highscore entry for %s with %d FPH\n",
+    gi.dprintf("Added highscore entry for %s with %d frags\n",
                c->pers.netname, score);
 
     G_SaveScores();

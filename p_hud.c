@@ -212,7 +212,7 @@ void HighScoresMessage(void)
            "yv 0 "
            "cstring \"High Scores for %s\""
            "yv 16 "
-           "cstring2 \"  # Name             FPH Date      \"",
+           "cstring2 \"  # Name             Frg Date      \"",
            level.mapname);
 
     y = 24;
