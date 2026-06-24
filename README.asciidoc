@@ -235,6 +235,12 @@ g_spawn_mode::
        - 1 - select random spawn point, avoiding two closest (fixed version)
        - 2 - select random spawn point
 
+g_aimfix::
+    Adjusts projectile and bullet aim from weapon muzzle toward the player's
+    crosshair trace. Default value is 0 (disabled).
+       - 0 - original Quake 2 aim behaviour
+       - 1 - aim at crosshair trace from player view
+
 g_item_ban::
     Allows one to remove certain items from the map. This variable is a
     bitmask.  Default value is 0.

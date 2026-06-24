@@ -57,6 +57,7 @@ cvar_t  *g_bugs;
 cvar_t  *g_teleporter_nofreeze;
 cvar_t  *g_instagib;
 cvar_t  *g_spawn_mode;
+cvar_t  *g_aimfix;
 cvar_t  *g_team_chat;
 cvar_t  *g_mute_chat;
 cvar_t  *g_protection_time;
@@ -1298,6 +1299,7 @@ static void G_Init(void)
     g_teleporter_nofreeze = gi.cvar("g_teleporter_nofreeze", "0", 0);
     g_instagib = gi.cvar("g_instagib", "0", CVAR_SERVERINFO);
     g_spawn_mode = gi.cvar("g_spawn_mode", "1", 0);
+    g_aimfix = gi.cvar("g_aimfix", "0", 0);
     g_team_chat = gi.cvar("g_team_chat", "0", 0);
     g_mute_chat = gi.cvar("g_mute_chat", "0", 0);
     g_protection_time = gi.cvar("g_protection_time", "0", 0);
