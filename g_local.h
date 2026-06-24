@@ -673,6 +673,7 @@ extern  cvar_t  *g_bugs;
 extern  cvar_t  *g_teleporter_nofreeze;
 extern  cvar_t  *g_instagib;
 extern  cvar_t  *g_spawn_mode;
+extern  cvar_t  *g_aimfix;
 extern  cvar_t  *g_team_chat;
 extern  cvar_t  *g_mute_chat;
 extern  cvar_t  *g_protection_time;
