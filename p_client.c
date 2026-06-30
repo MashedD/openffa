@@ -1366,6 +1366,9 @@ void ClientBegin(edict_t *ent)
         }
     }
 
+    G_UpdatePlayerSkinsForViewer(ent);
+    G_UpdatePlayerSkinOverrides(ent);
+
     if (ent->client->level.first_time) {
         gi.bprintf(PRINT_HIGH, "%s connected\n", ent->client->pers.netname);
 
@@ -1403,7 +1406,7 @@ static skin_entry_t *find_skin(skin_entry_t *head, const char *name)
     return head; // use default
 }
 
-static bool parse_skin(char *out, const char *in)
+bool G_ParseSkin(char *out, const char *in)
 {
     char *p;
     skin_entry_t *m, *s;
@@ -1462,6 +1465,63 @@ bad:
     return true;
 }
 
+static bool valid_skin_client(edict_t *ent)
+{
+    return ent->inuse && ent->client &&
+           ent->client->pers.connected > CONN_CONNECTED &&
+           !ent->client->pers.mvdspec;
+}
+
+static void write_player_skin(edict_t *viewer, edict_t *target)
+{
+    char playerskin[MAX_QPATH];
+    gclient_t *client = target->client;
+    const char *skin = client->pers.skin;
+
+    if (viewer != target && viewer->client->pers.eskin[0]) {
+        skin = viewer->client->pers.eskin;
+    }
+
+    Q_concat(playerskin, sizeof(playerskin), client->pers.netname, "\\", skin);
+    gi.WriteByte(svc_configstring);
+    gi.WriteShort(CS_PLAYERSKINS + (target - g_edicts) - 1);
+    gi.WriteString(playerskin);
+}
+
+void G_UpdatePlayerSkinsForViewer(edict_t *viewer)
+{
+    edict_t *target;
+
+    if (!valid_skin_client(viewer)) {
+        return;
+    }
+
+    for (target = g_edicts + 1; target <= g_edicts + game.maxclients; target++) {
+        if (!valid_skin_client(target)) {
+            continue;
+        }
+        write_player_skin(viewer, target);
+    }
+    gi.unicast(viewer, true);
+}
+
+void G_UpdatePlayerSkinOverrides(edict_t *target)
+{
+    edict_t *viewer;
+
+    if (!valid_skin_client(target)) {
+        return;
+    }
+
+    for (viewer = g_edicts + 1; viewer <= g_edicts + game.maxclients; viewer++) {
+        if (!valid_skin_client(viewer) || !viewer->client->pers.eskin[0]) {
+            continue;
+        }
+        write_player_skin(viewer, target);
+        gi.unicast(viewer, true);
+    }
+}
+
 static bool forbid_name_change(edict_t *ent)
 {
     if (!ent->client->pers.skin[0]) {
@@ -1506,7 +1566,7 @@ void ClientUserinfoChanged(edict_t *ent, char *userinfo)
 
     // set skin
     s = Info_ValueForKey(userinfo, "skin");
-    parse_skin(skin, s);
+    G_ParseSkin(skin, s);
 
     changed = strcmp(name, client->pers.netname) ||
               strcmp(skin, client->pers.skin);
@@ -1524,6 +1584,7 @@ void ClientUserinfoChanged(edict_t *ent, char *userinfo)
             gi.configstring(CS_PLAYERNAMES + playernum, name);
             strcpy(client->pers.skin, skin);
             strcpy(client->pers.netname, name);
+            G_UpdatePlayerSkinOverrides(ent);
         }
     }
 

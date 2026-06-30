@@ -1344,9 +1344,30 @@ static void Cmd_Commands_f(edict_t *ent)
                "players    Show players on server\n"
                "highscores Show the best results on map\n"
                "id         Toggle player ID display\n"
+               "eskin      Change enemy skin\n"
                "ready      Become ready during warmup\n"
                "unready    Become not ready during warmup\n"
               );
+}
+
+static void Cmd_EnemySkin_f(edict_t *ent)
+{
+    char skin[MAX_SKINNAME];
+
+    if (gi.argc() < 2) {
+        gi.cprintf(ent, PRINT_HIGH, "Usage: %s model/skin\n", gi.argv(0));
+        return;
+    }
+
+    if (!Q_stricmp(gi.argv(1), "none")) {
+        ent->client->pers.eskin[0] = 0;
+        G_UpdatePlayerSkinsForViewer(ent);
+        return;
+    }
+
+    G_ParseSkin(skin, gi.argv(1));
+    strcpy(ent->client->pers.eskin, skin);
+    G_UpdatePlayerSkinsForViewer(ent);
 }
 
 static void select_test(edict_t *ent)
@@ -1664,6 +1685,10 @@ void ClientCommand(edict_t *ent)
     }
     if (Q_stricmp(cmd, "id") == 0) {
         Cmd_Id_f(ent);
+        return;
+    }
+    if (Q_stricmp(cmd, "eskin") == 0) {
+        Cmd_EnemySkin_f(ent);
         return;
     }
 

@@ -30,6 +30,7 @@ stats:: Show accuracy stats
 players:: Show players on server
 highscores:: Show the best results on map
 id:: Toggle player ID display
+eskin <model/skin>:: Show other players with this skin, including skin-specific sounds. Use ‘eskin none’ to clear.
 ready:: Become ready during warmup
 unready:: Become not ready during warmup
 commands:: Show custom client commands list
