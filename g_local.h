@@ -868,6 +868,9 @@ void BeginIntermission(void);
 void PutClientInServer(edict_t *ent);
 void InitBodyQue(void);
 void ClientBeginServerFrame(edict_t *ent);
+bool G_ParseSkin(char *out, const char *in);
+void G_UpdatePlayerSkinsForViewer(edict_t *viewer);
+void G_UpdatePlayerSkinOverrides(edict_t *target);
 void G_WriteTime(int remaining);
 void G_BeginDamage(void);
 void G_AccountDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, int points);
@@ -1074,6 +1077,7 @@ typedef struct flood_s {
 typedef struct {
     char        netname[MAX_NETNAME];
     char        skin[MAX_SKINNAME];
+    char        eskin[MAX_SKINNAME];
     char        ip[MAX_IPSTR];
     int         hand;
     float       fov;
