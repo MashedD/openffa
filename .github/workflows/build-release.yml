@@ -1,0 +1,94 @@
+name: Build and release
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Build Linux library
+        run: |
+          make -j"$(nproc)"
+          strip --strip-unneeded gamex86_64.so
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openffa-linux-x86_64
+          path: gamex86_64.so
+          if-no-files-found: error
+          retention-days: 30
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: win32
+            msystem: MINGW32
+            packages: mingw-w64-i686-binutils mingw-w64-i686-gcc mingw-w64-i686-pkgconf mingw-w64-i686-curl
+            config: .config-win32
+            output: gamex86.dll
+            strip: strip
+          - arch: win64
+            msystem: UCRT64
+            packages: mingw-w64-ucrt-x86_64-binutils mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-curl
+            config: .config-win64
+            output: gamex86_64.dll
+            strip: strip
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          suppress-deprecation-warnings: msystem-mingw32
+          install: git make ${{ matrix.packages }}
+      - name: Build Windows library
+        run: |
+          make CONFIG_FILE=${{ matrix.config }} WINDRES=windres -j"$(nproc)"
+          chmod -x ${{ matrix.output }}
+          ${{ matrix.strip }} ${{ matrix.output }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openffa-${{ matrix.arch }}
+          path: ${{ matrix.output }}
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Generate checksums
+        run: cd dist && sha256sum -- * > SHA256SUMS
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

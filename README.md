@@ -36,7 +36,15 @@ paru -S \
 
 ## Compilation
 
-Review scripts before executing them.
+The GitHub Actions workflow builds the Linux x86_64 library and Windows 32-bit
+and 64-bit libraries on every push to `master` and pull request. Tag a commit
+with `vMAJOR.MINOR.PATCH` to build and publish a GitHub release containing all
+three libraries and SHA-256 checksums.
+
+For local builds, install the platform-specific compilers and libraries listed
+above. The Windows configs use `pkg-config` to find the target's static libcurl
+and its dependencies; when cross-compiling, `PKG_CONFIG` must point to the
+target-aware `pkg-config` wrapper.
 
 ```bash
 ./build-lin64.sh
@@ -44,5 +52,12 @@ Review scripts before executing them.
 ./build-win32.sh
 ./clean.sh
 ./build-win64.sh
+```
+
+Releases are built from version tags, for example:
+
+```bash
+git tag -a v1.0.0 -m "OpenFFA 1.0.0"
+git push origin v1.0.0
 ```
 
