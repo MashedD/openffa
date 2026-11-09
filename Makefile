@@ -1,19 +1,17 @@
-### OpenFFA Makefile ###
-
-CONFIG_FILE ?= .config
-
--include $(CONFIG_FILE)
+ifdef CONFIG_FILE
+	-include $(CONFIG_FILE)
+endif
 
 ifndef CPU
-    CPU := $(shell uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
+	CPU := $(shell uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
 endif
 
 ifndef REV
-    REV := $(shell git rev-list --count HEAD)
+	REV := $(shell git rev-list --count HEAD)
 endif
 
 ifndef VER
-    VER := r$(REV)~$(shell git rev-parse --short HEAD)
+	VER := r$(REV)~$(shell git rev-parse --short HEAD)
 endif
 
 CC ?= gcc
@@ -71,6 +69,14 @@ endif
 ifdef CONFIG_UDP
     CFLAGS += -DUSE_UDP=1
     OBJS += g_udp.o
+endif
+
+ifdef CONFIG_32BIT
+	CFLAGS += -m32
+	LDFLAGS += -m32
+	CPU = x86
+else
+	CPU = x86_64
 endif
 
 ifdef CONFIG_WINDOWS
