@@ -452,6 +452,7 @@ typedef struct {
     score_t     scores[MAX_SCORES];
     int         numscores;
     time_t      record;        // not zero if scores updated
+    bool        instagib;      // g_instagib at map load; insta scores frags, not FPH
 
     int         players_in;
     int         players_out;

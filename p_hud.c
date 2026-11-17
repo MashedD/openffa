@@ -212,8 +212,8 @@ void HighScoresMessage(void)
            "yv 0 "
            "cstring \"High Scores for %s\""
            "yv 16 "
-           "cstring2 \"  # Name             FPH Date      \"",
-           level.mapname);
+           "cstring2 \"  # Name             %s Date      \"",
+           level.mapname, level.instagib ? "Frg" : "FPH");
 
     y = 24;
     for (i = 0; i < level.numscores; i++) {

@@ -832,8 +832,9 @@ void Cmd_HighScores_f(edict_t *ent)
     }
 
     gi.cprintf(ent, PRINT_HIGH,
-               " # Name            FPH  Date\n"
-               "-- --------------- ---- ----------------\n");
+               " # Name            %s  Date\n"
+               "-- --------------- ---- ----------------\n",
+               level.instagib ? "Frg" : "FPH");
     for (i = 0; i < level.numscores; i++) {
         s = &level.scores[i];
 
@@ -1340,6 +1341,7 @@ static void Cmd_Commands_f(edict_t *ent)
                "settings   Show match settings\n"
                "oldscore   Show previous scoreboard\n"
                "vote       Propose new settings\n"
+               "maplist    Show maps available on this server\n"
                "stats      Show accuracy stats\n"
                "players    Show players on server\n"
                "highscores Show the best results on map\n"
@@ -1348,6 +1350,42 @@ static void Cmd_Commands_f(edict_t *ent)
                "ready      Become ready during warmup\n"
                "unready    Become not ready during warmup\n"
               );
+}
+
+static void Cmd_MapList_f(edict_t *ent)
+{
+    char buffer[MAX_STRING_CHARS];
+    map_entry_t *map;
+    size_t total = 0, len;
+    int count = 0, col = 0;
+
+    LIST_FOR_EACH(map_entry_t, map, &g_map_list, list) {
+        if (map->flags & MAP_NOVOTE) {
+            continue;
+        }
+        len = strlen(map->name);
+        // flush before overflowing one network print
+        if (total + len + 2 >= sizeof(buffer) - 64) {
+            buffer[total] = 0;
+            gi.cprintf(ent, PRINT_HIGH, "%s", buffer);
+            total = 0;
+        }
+        total += Q_snprintf(buffer + total, sizeof(buffer) - total,
+                            col == 4 ? "%s\n" : "%-15s ", map->name);
+        col = (col + 1) % 5;
+        count++;
+    }
+
+    if (!count) {
+        gi.cprintf(ent, PRINT_HIGH, "No maps available for voting.\n");
+        return;
+    }
+    if (col) {
+        buffer[total++] = '\n';
+    }
+    buffer[total] = 0;
+    gi.cprintf(ent, PRINT_HIGH, "%s%d maps, current: %s. Use 'vote map <name>'.\n",
+               buffer, count, level.mapname);
 }
 
 static void Cmd_EnemySkin_f(edict_t *ent)
@@ -1665,6 +1703,10 @@ void ClientCommand(edict_t *ent)
     }
     if (Q_stricmp(cmd, "highscore") == 0 || Q_stricmp(cmd, "highscores") == 0) {
         Cmd_HighScores_f(ent);
+        return;
+    }
+    if (Q_stricmp(cmd, "maplist") == 0 || Q_stricmp(cmd, "maps") == 0) {
+        Cmd_MapList_f(ent);
         return;
     }
     if (Q_stricmp(cmd, "stats") == 0 || Q_stricmp(cmd, "accuracy") == 0) {

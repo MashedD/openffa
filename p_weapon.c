@@ -1155,7 +1155,7 @@ static void weapon_railgun_fire(edict_t *ent)
     vec3_t      start;
     vec3_t      forward, right;
     vec3_t      offset;
-    int         damage = 100;
+    int         damage = g_instagib->value ? 1000 : 100;
     int         kick = 200;
 
     if (is_quad) {

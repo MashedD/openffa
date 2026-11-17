@@ -552,6 +552,7 @@ void G_SpawnEntities(const char *mapname, const char *entities, const char *spaw
 
     Q_strlcpy(level.mapname, mapname, sizeof(level.mapname));
     level.match_state = (int)g_warmup->value ? MS_WARMUP : MS_PLAYING;
+    level.instagib = g_instagib->value != 0;
 
     G_LoadScores();
 

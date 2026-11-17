@@ -336,6 +336,9 @@ static int ScoreCmp(const void *p1, const void *p2)
 
 #define SD(s)   *s ? "/" : "", s
 
+// instagib records frags, normal FFA records FPH: keep them in separate files
+#define SCORES_MODE_DIR (level.instagib ? "/insta" : "")
+
 static void G_SaveScores(void)
 {
     char path[MAX_OSPATH];
@@ -348,8 +351,8 @@ static void G_SaveScores(void)
         return;
     }
 
-    len = Q_snprintf(path, sizeof(path), "%s/highscores%s%s/%s.txt",
-                     game.dir, SD(g_highscores_dir->string), level.mapname);
+    len = Q_snprintf(path, sizeof(path), "%s/highscores%s%s%s/%s.txt",
+                     game.dir, SD(g_highscores_dir->string), SCORES_MODE_DIR, level.mapname);
     if (len >= sizeof(path)) {
         return;
     }
@@ -388,12 +391,16 @@ static void G_RegisterScore(void)
     // grab our champion
     c = ranks[0];
 
-    // calculate FPH
-    sec = (level.framenum - c->resp.enter_framenum) / HZ;
-    if (!sec) {
-        sec = 1;
+    if (level.instagib) {
+        score = c->resp.score;
+    } else {
+        // calculate FPH
+        sec = (level.framenum - c->resp.enter_framenum) / HZ;
+        if (!sec) {
+            sec = 1;
+        }
+        score = c->resp.score * 3600 / sec;
     }
-    score = c->resp.score * 3600 / sec;
 
     if (score < 1) {
         return; // do not record bogus results
@@ -416,8 +423,8 @@ static void G_RegisterScore(void)
 
     qsort(level.scores, level.numscores, sizeof(score_t), ScoreCmp);
 
-    gi.dprintf("Added highscore entry for %s with %d FPH\n",
-               c->pers.netname, score);
+    gi.dprintf("Added highscore entry for %s with %d %s\n",
+               c->pers.netname, score, level.instagib ? "frags" : "FPH");
 
     G_SaveScores();
 }
@@ -433,7 +440,8 @@ void G_LoadScores(void)
     if (!game.dir[0]) {
         return;
     }
-    f = G_LoadFile("%s/highscores%s%s/%s.txt", game.dir, SD(g_highscores_dir->string), level.mapname);
+    f = G_LoadFile("%s/highscores%s%s%s/%s.txt", game.dir, SD(g_highscores_dir->string),
+                   SCORES_MODE_DIR, level.mapname);
     if (!f) {
         return;
     }

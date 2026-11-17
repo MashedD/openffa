@@ -199,10 +199,12 @@ bool G_CheckVote(void)
             game.settings_modified++;
             break;
         case VOTE_INSTAGIB:
-            gi.bprintf(PRINT_HIGH, "Vote passed: instagib is now %sABLED.\n",
+            gi.bprintf(PRINT_HIGH, "Vote passed: instagib is now %sABLED, restarting map.\n",
                        level.vote.value ? "EN" : "DIS");
             gi.cvar_set("g_instagib", va("%d", level.vote.value));
             game.settings_modified++;
+            // restart so inventories, items and highscores all match the new mode
+            gi.AddCommandString(va("gamemap \"%s\"\n", level.mapname));
             break;
 
         default:
@@ -606,7 +608,7 @@ void Cmd_Vote_f(edict_t *ent)
         }
         if (mask & VOTE_MAP) {
             gi.cprintf(ent, PRINT_HIGH,
-                       " map <name>                     Change current map\n");
+                       " map <name>                     Change current map (see 'maplist')\n");
         }
         if (mask & VOTE_WEAPONSTAY) {
             gi.cprintf(ent, PRINT_HIGH,
@@ -711,7 +713,8 @@ void Cmd_Vote_f(edict_t *ent)
                 total -= 2;
             }
             buffer[total] = 0;
-            gi.cprintf(ent, PRINT_HIGH, "Available maplist: %s\n", buffer);
+            gi.cprintf(ent, PRINT_HIGH, "Available maplist: %s\n"
+                       "Type 'maplist' for the full list.\n", buffer);
         } else {
             gi.cprintf(ent, PRINT_HIGH, "Argument required for '%s'. Type '%s help' for usage.\n", v->name, gi.argv(0));
         }

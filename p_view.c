@@ -542,7 +542,7 @@ static void P_FallingDamage(edict_t *ent)
             damage = 1;
         VectorSet(dir, 0, 0, 1);
 
-        if (!DF(NO_FALLING))
+        if (!DF(NO_FALLING) && !g_instagib->value)
             T_Damage(ent, world, world, dir, ent->s.origin, vec3_origin, damage, 0, 0, MOD_FALLING);
     } else {
         ent->s.event = EV_FALLSHORT;
