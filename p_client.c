@@ -1345,7 +1345,10 @@ void ClientBegin(edict_t *ent)
     // locate ent at a spawn point
     PutClientInServer(ent);
 
-    if (ent->client->pers.mvdspec || level.intermission_framenum || (int)g_warmup->value)
+    // During warmup newcomers join like on a normal server; once the
+    // countdown or match is under way they spectate so they can't abort it.
+    if (ent->client->pers.mvdspec || level.intermission_framenum ||
+        ((int)g_warmup->value && level.match_state != MS_WARMUP))
         ent->client->pers.connected = CONN_SPECTATOR;
 
     if (level.intermission_framenum) {
@@ -1385,8 +1388,13 @@ void ClientBegin(edict_t *ent)
     }
 
     if (!ent->client->pers.mvdspec && !level.intermission_framenum && (int)g_warmup->value) {
-        Cmd_Menu_f(ent);
-        ent->client->resp.enter_framenum -= 5 * HZ; // hack for G_SpecRateLimited()
+        if (level.match_state == MS_WARMUP) {
+            gi.cprintf(ent, PRINT_HIGH, "Warmup: press fire to join, then type 'ready'. "
+                       "The match starts when everyone in game is ready.\n");
+        } else {
+            Cmd_Menu_f(ent);
+            ent->client->resp.enter_framenum -= 5 * HZ; // hack for G_SpecRateLimited()
+        }
     }
 
     // make sure all view stuff is valid

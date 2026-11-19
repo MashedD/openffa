@@ -286,7 +286,10 @@ g_vote_flags::
 
 g_warmup::
     Enables warmup period before match, and requires all players to be ready
-    for match to start. Default value is 0.
+    for match to start. Default value is 0. Every player in game (at least 2)
+    must type ‘ready’; ‘unready’ during the countdown aborts it. Players who
+    connect during warmup join normally; during the countdown or the match
+    they start as spectators.
 
 g_countdown_time::
     Specifies countdown time before match starts, in seconds. Only effective if
