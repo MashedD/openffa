@@ -243,6 +243,13 @@ g_aimfix::
        - 0 - original Quake 2 aim behaviour
        - 1 - aim at crosshair trace from player view
 
+g_hit_sound::
+    Sound played to a player who hits someone, for clients without
+    re-release hit markers, such as older Q2PRO and R1Q2, for example
+    misc/talk1.wav. Clients whose userinfo has cl_hit_markers above 0, such
+    as the MashedD Q2PRO fork, get the hit marker instead. Default value is
+    empty (disabled).
+
 g_item_ban::
     Allows one to remove certain items from the map. This variable is a
     bitmask.  Default value is 0.
