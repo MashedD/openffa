@@ -655,6 +655,7 @@ extern  cvar_t  *skill;
 extern  cvar_t  *fraglimit;
 extern  cvar_t  *timelimit;
 extern  cvar_t  *g_select_empty;
+extern  cvar_t  *g_hit_sound;
 extern  cvar_t  *g_idle_time;
 extern  cvar_t  *g_idle_kick;
 
@@ -1091,6 +1092,7 @@ typedef struct {
     bool        noviewid: 1;
     bool        muted: 1;
     bool        extended_layout: 1;
+    bool        hit_markers: 1;     // cl_hit_markers in userinfo
 } client_persistant_t;
 
 // client data that stays across deathmatch respawns,
@@ -1169,6 +1171,7 @@ struct gclient_s {
     int         damage_parmor;      // damage absorbed by power armor
     int         damage_blood;       // damage taken out of health
     int         damage_knockback;   // impact damage
+    int         hit_damage;         // dealt to others this frame, for hit markers
     vec3_t      damage_from;        // origin for vector calculation
 
     float       killer_yaw;         // when dead, look at killer

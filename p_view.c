@@ -930,12 +930,51 @@ Called for each player at the end of the server frame
 and right after spawning
 =================
 */
+#define TE_DAMAGE_DEALT     128     // re-release hit marker: short damage
+#define SND_ATTENUATION     (1 << 1)
+
+/*
+=================
+G_SendHitMarker
+
+Tells the player about the damage they dealt this frame. Clients that
+announce cl_hit_markers in their userinfo get the re-release hit marker,
+TE_DAMAGE_DEALT. Others, such as older Q2PRO and R1Q2, would drop the
+connection on that unknown temp entity, so they get g_hit_sound instead,
+a local sound every client plays, when the server sets one.
+=================
+*/
+static void G_SendHitMarker(edict_t *ent)
+{
+    gclient_t *client = ent->client;
+    int damage = client->hit_damage;
+
+    if (damage <= 0)
+        return;
+    client->hit_damage = 0;
+
+    if (client->pers.hit_markers) {
+        gi.WriteByte(svc_temp_entity);
+        gi.WriteByte(TE_DAMAGE_DEALT);
+        gi.WriteShort(min(damage, 32767));
+        gi.unicast(ent, false);
+    } else if (g_hit_sound->string[0]) {
+        gi.WriteByte(svc_sound);
+        gi.WriteByte(SND_ATTENUATION);
+        gi.WriteByte(gi.soundindex(g_hit_sound->string));
+        gi.WriteByte(ATTN_NONE);
+        gi.unicast(ent, false);
+    }
+}
+
 void ClientEndServerFrame(edict_t *ent)
 {
     int     i;
 
     current_player = ent;
     current_client = ent->client;
+
+    G_SendHitMarker(ent);
 
     //
     // If the origin or velocity have changed since ClientThink(),
