@@ -357,6 +357,11 @@ void T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t
         else
             SpawnDamage(TE_SPARKS, point, normal);
 
+        // count damage dealt to the living for the attacker's hit marker
+        if (attacker && attacker->client && attacker != targ && targ->health > 0
+            && ((targ->svflags & SVF_MONSTER) || client))
+            attacker->client->hit_damage += take;
+
         targ->health -= take;
 
         if (targ->health <= 0) {

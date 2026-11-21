@@ -1613,6 +1613,10 @@ void ClientUserinfoChanged(edict_t *ent, char *userinfo)
     s = Info_ValueForKey(userinfo, "hand");
     client->pers.hand = *s ? atoi(s) : 0;
 
+    // only clients that announce it handle the re-release hit marker
+    s = Info_ValueForKey(userinfo, "cl_hit_markers");
+    client->pers.hit_markers = *s && atoi(s) > 0;
+
     // gender
     s = Info_ValueForKey(userinfo, "gender");
     if (s[0] == 'f' || s[0] == 'F') {
