@@ -1341,7 +1341,7 @@ static void Cmd_Commands_f(edict_t *ent)
                "settings   Show match settings\n"
                "oldscore   Show previous scoreboard\n"
                "vote       Propose new settings\n"
-               "maplist    Show maps available on this server\n"
+               "maplist    Show the rotation; 'maplist <text>' searches, 'maplist all' browses\n"
                "stats      Show accuracy stats\n"
                "players    Show players on server\n"
                "highscores Show the best results on map\n"
@@ -1352,40 +1352,122 @@ static void Cmd_Commands_f(edict_t *ent)
               );
 }
 
+// Everything one command prints goes out in the same server frame, so the
+// total must stay well below the client's reliable message buffer, or the
+// client is dropped with an overflow (seen with a few thousand vote-only maps).
+#define MAPLIST_BUDGET  2800
+#define MAPLIST_PAGE    150
+
+typedef struct {
+    char    buffer[MAX_STRING_CHARS];
+    size_t  total;      // bytes in buffer
+    size_t  sent;       // bytes printed so far by this command
+    int     col;
+} maplist_out_t;
+
+static void MapList_Flush(edict_t *ent, maplist_out_t *out)
+{
+    if (out->total) {
+        out->buffer[out->total] = 0;
+        gi.cprintf(ent, PRINT_HIGH, "%s", out->buffer);
+        out->sent += out->total;
+        out->total = 0;
+    }
+}
+
+// Returns false once the budget is used up.
+static bool MapList_Add(edict_t *ent, maplist_out_t *out, const char *name)
+{
+    size_t len = strlen(name) + 17;
+
+    if (out->sent + out->total + len >= MAPLIST_BUDGET) {
+        return false;
+    }
+    if (out->total + len >= sizeof(out->buffer) - 1) {
+        MapList_Flush(ent, out);
+    }
+    out->total += Q_snprintf(out->buffer + out->total, sizeof(out->buffer) - out->total,
+                             out->col == 4 ? "%s\n" : "%-15s ", name);
+    out->col = (out->col + 1) % 5;
+    return true;
+}
+
+static void MapList_End(edict_t *ent, maplist_out_t *out)
+{
+    if (out->col && out->total < sizeof(out->buffer) - 1) {
+        out->buffer[out->total++] = '\n';
+    }
+    out->col = 0;
+    MapList_Flush(ent, out);
+}
+
+/*
+maplist                 maps in the automatic rotation (+ how many more can be voted)
+maplist <text>          votable maps whose name contains <text>
+maplist all [page]      every votable map, MAPLIST_PAGE per page
+*/
 static void Cmd_MapList_f(edict_t *ent)
 {
-    char buffer[MAX_STRING_CHARS];
+    maplist_out_t out = { .total = 0 };
     map_entry_t *map;
-    size_t total = 0, len;
-    int count = 0, col = 0;
+    const char *arg = gi.argc() > 1 ? gi.argv(1) : "";
+    bool all = !Q_stricmp(arg, "all");
+    int page = all && gi.argc() > 2 ? atoi(gi.argv(2)) : 1;
+    int votable = 0, extra = 0, matched = 0, shown = 0, skipped = 0;
+
+    if (page < 1) {
+        page = 1;
+    }
+    skipped = (page - 1) * MAPLIST_PAGE;
 
     LIST_FOR_EACH(map_entry_t, map, &g_map_list, list) {
         if (map->flags & MAP_NOVOTE) {
             continue;
         }
-        len = strlen(map->name);
-        // flush before overflowing one network print
-        if (total + len + 2 >= sizeof(buffer) - 64) {
-            buffer[total] = 0;
-            gi.cprintf(ent, PRINT_HIGH, "%s", buffer);
-            total = 0;
+        votable++;
+        if (all) {
+            if (matched++ < skipped || shown >= MAPLIST_PAGE) {
+                continue;
+            }
+        } else if (*arg) {
+            if (!Q_stristr(map->name, arg)) {
+                continue;
+            }
+            matched++;
+        } else if (map->flags & MAP_NOAUTO) {
+            extra++;    // vote-only: counted, not listed
+            continue;
+        } else {
+            matched++;
         }
-        total += Q_snprintf(buffer + total, sizeof(buffer) - total,
-                            col == 4 ? "%s\n" : "%-15s ", map->name);
-        col = (col + 1) % 5;
-        count++;
+        if (MapList_Add(ent, &out, map->name)) {
+            shown++;
+        }
     }
+    MapList_End(ent, &out);
 
-    if (!count) {
+    if (!votable) {
         gi.cprintf(ent, PRINT_HIGH, "No maps available for voting.\n");
-        return;
+    } else if (all) {
+        int pages = (votable + MAPLIST_PAGE - 1) / MAPLIST_PAGE;
+        gi.cprintf(ent, PRINT_HIGH, "Page %d/%d of %d votable maps.%s\n", page, pages, votable,
+                   page < pages ? va(" Next: 'maplist all %d'.", page + 1) : "");
+    } else if (*arg) {
+        if (!matched) {
+            gi.cprintf(ent, PRINT_HIGH, "No votable map matches '%s'.\n", arg);
+        } else if (shown < matched) {
+            gi.cprintf(ent, PRINT_HIGH, "%d of %d maps matching '%s'; type more of the name.\n", shown, matched, arg);
+        } else {
+            gi.cprintf(ent, PRINT_HIGH, "%d maps match '%s'. Use 'vote map <name>'.\n", matched, arg);
+        }
+    } else {
+        gi.cprintf(ent, PRINT_HIGH, "%d maps in rotation%s, current: %s. Use 'vote map <name>'.\n",
+                   matched, shown < matched ? va(" (%d shown)", shown) : "", level.mapname);
+        if (extra) {
+            gi.cprintf(ent, PRINT_HIGH, "%d more maps can be voted: 'maplist <part of name>' to search, "
+                       "'maplist all' to browse.\n", extra);
+        }
     }
-    if (col) {
-        buffer[total++] = '\n';
-    }
-    buffer[total] = 0;
-    gi.cprintf(ent, PRINT_HIGH, "%s%d maps, current: %s. Use 'vote map <name>'.\n",
-               buffer, count, level.mapname);
 }
 
 static void Cmd_EnemySkin_f(edict_t *ent)
